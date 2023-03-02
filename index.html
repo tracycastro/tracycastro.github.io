@@ -257,10 +257,7 @@
           event.target.closest('.door-button').replaceWith('');
           setTimeout(() => {
             if (sockCheck) {
-              shuffle(monsters);
               winnerCheck();
-              removeDoors();
-              addDoors();
             }
           }, 250);
         }
