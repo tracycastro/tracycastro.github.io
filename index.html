@@ -31,12 +31,13 @@
 			 */
       img {
         height: auto;
+        max-height: 85%;
         max-width: 100%;
       }
       button {
         display: inline-block;
         border: none;
-        padding: 1rem 2rem;
+
         margin: 0;
         text-decoration: none;
         background: #fff;
@@ -47,7 +48,9 @@
         -webkit-appearance: none;
         -moz-appearance: none;
       }
+
       button#start-over {
+        padding: 1rem 2rem;
         background: green;
         text-align: center;
         margin-inline: auto;
@@ -72,7 +75,6 @@
         place-items: center;
         place-content: center;
         overflow: hidden;
-        max-height: clamp(450px, 50vh, 600px);
       }
       .grid > * {
         grid-area: card;
@@ -86,7 +88,7 @@
     <h1>Monsters! Game</h1>
 
     <div id="app"></div>
-    <div><button id="start-over">Start Over</button></div>
+    <!-- <div><button id="start-over">Start Over</button></div> -->
 
     <footer>
       <hr />
@@ -199,7 +201,8 @@
       shuffle(monsters);
 
       // Inject the monsters into the DOM
-      app.innerHTML = `<div class="row aria-live="polite"">
+      function addHTML() {
+        app.innerHTML = `<div class="row aria-live="polite"">
               			${monsters
                       .map(function (monster) {
                         return `
@@ -209,11 +212,13 @@
                       })
                       .join('')}
               		</div>`;
+      }
+      addHTML();
       let images = document.querySelectorAll('img');
       let sock = document
         .querySelector('img[src="sock.svg"]')
         .classList.add('sock');
-      let startOver = document.querySelector('#start-over');
+      // let startOver = document.querySelector('#start-over');
 
       function addDoors() {
         images.forEach(function (image) {
@@ -252,6 +257,7 @@
           event.target.closest('.door-button').replaceWith('');
           setTimeout(() => {
             if (sockCheck) {
+              shuffle(monsters);
               winnerCheck();
               removeDoors();
               addDoors();
@@ -262,10 +268,10 @@
 
       addDoors();
 
-      startOver.addEventListener('click', function () {
-        removeDoors();
-        addDoors();
-      });
+      // startOver.addEventListener('click', function () {
+      //   removeDoors();
+      //   addDoors();
+      // });
     </script>
   </body>
 </html>
