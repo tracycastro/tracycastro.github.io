@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Monsters! Game</title>
+    <title>Monsters! - Game</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <style type="text/css">
@@ -33,66 +33,35 @@
         height: auto;
         max-width: 100%;
       }
-      @media screen and (max-width: 640px) {
-        img {
-          max-height: 85%;
-        }
-      }
-      button {
-        display: inline-block;
-        border: none;
-        padding: 2em;
-        margin: 0;
-        text-decoration: none;
-        background: #fff;
-        color: #fff;
-        cursor: pointer;
-        text-align: center;
-        transition: background 250ms ease-in-out, transform 150ms ease;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-      }
 
-      button#start-over {
-        padding: 1rem 2rem;
-        background: green;
-        text-align: center;
-        margin-inline: auto;
-        width: 100%;
+      /**
+			 * Style buttons to not look like buttons
+			 */
+      [data-monster] {
+        background-color: transparent;
+        border: 0;
       }
-      button:hover,
-      button:focus {
-        background: hsl(239, 100%, 87%);
-      }
-
-      button:focus {
-        outline: 1px solid #fff;
-        outline-offset: -4px;
-      }
-
-      button:active {
-        transform: scale(0.99);
-      }
-      .grid {
+      .pre-game {
+        padding: 1em;
         display: grid;
-        grid-template: 'card';
-        place-items: center;
-        place-content: center;
-        overflow: hidden;
+        grid-template-columns: auto auto;
       }
-      .grid > * {
-        grid-area: card;
+      .pre-game:has(> p.sock) {
+        border: 2px solid orange;
       }
-      .hide-door {
-        display: none;
+      button:disabled {
+        opacity: 0.4;
+        pointer-events: none;
+      }
+      [tabindex='-1'] {
+        outline: none;
       }
     </style>
   </head>
   <body>
-    <h1>Monsters! Game</h1>
+    <h1 tabindex="-1">Monsters! - Game</h1>
 
     <div id="app"></div>
-    <!-- <div><button id="start-over">Start Over</button></div> -->
 
     <footer>
       <hr />
@@ -121,6 +90,10 @@
     </footer>
 
     <script>
+      //
+      // Variables
+      //
+
       // The monsters and socks
       let monsters = [
         {
@@ -173,8 +146,12 @@
         },
       ];
 
-      // Get the #app element
+      // Get the elements
       let app = document.querySelector('#app');
+
+      //
+      // Methods
+      //
 
       /**
        * Randomly shuffle an array
@@ -201,78 +178,107 @@
         return array;
       }
 
+      /**
+       * Handle click events
+       * @param  {Event} event The event object
+       */
+      function clickHandler(event) {
+        // Get the monster
+        let btn = event.target.closest('[data-monster]');
+        if (!btn) return;
+        let monster = monsters[btn.getAttribute('data-monster')];
+        if (!monster) return;
+
+        // Create the monster image
+        let img = document.createElement('img');
+        img.src = `${monster.name}.svg`;
+        img.alt = monster.alt;
+
+        // Replace the button with the monster
+        btn.replaceWith(img);
+
+        winnerCheck();
+      }
+
+      //
+      // Inits & Event Listeners
+      //
+
       // Shuffle the monsters array
       shuffle(monsters);
 
       // Inject the monsters into the DOM
-      function addHTML() {
-        app.innerHTML = `<div class="row aria-live="polite"">
-              			${monsters
-                      .map(function (monster) {
-                        return `
-              					<div class="grid" >
-              						<img class="monster" alt="${monster.alt}" src="${monster.name}.svg" hidden>
-              					</div>`;
-                      })
-                      .join('')}
-              		</div>`;
-      }
-      addHTML();
-      let images = document.querySelectorAll('img');
-      let sock = document
-        .querySelector('img[src="sock.svg"]')
-        .classList.add('sock');
-      // let startOver = document.querySelector('#start-over');
+      let content = `<div class="pre-game"><p>Click a door to reveal a monster. Try not to find the sock.</p></div>
+          		<div class="row">
+          			${monsters
+                  .map(function (monster, index) {
+                    return `
+          					<div class="grid" aria-live="polite">
+          						<button data-monster="${index}"><img alt="Door ${index + 1}" src="door.svg"></button>
+          					</div>`;
+                  })
+                  .join('')}
+          		</div>`;
+      app.innerHTML = content;
 
-      function addDoors() {
-        images.forEach(function (image) {
-          const doorButton = document.createElement('button');
-          doorButton.classList.add('door-button');
-          const doorImage = document.createElement('img');
-          doorButton.append(doorImage);
-          doorImage.alt = 'a brown door';
-          doorImage.src = 'door.svg';
-          image.closest('.grid').append(doorButton);
-        });
+      // Listen for click events
+      document.addEventListener('click', clickHandler);
+
+      //////////////////////////////////////////////////////
+
+      function playAgainButton(x) {
+        let playAgain = document.createElement('button');
+        playAgain.id = 'start-over';
+        playAgain.innerText = 'play again';
+        x.after(playAgain);
+        let startOver = document.querySelector('#start-over');
+
+        function startover() {
+          let h1 = document.querySelector('h1');
+          h1.focus();
+          shuffle(monsters);
+          app.innerHTML = content;
+        }
+        startOver.addEventListener('click', startover);
       }
-      function removeDoors() {
-        let doors = document.querySelectorAll('.door-button');
-        doors.forEach(function (door) {
-          door.replaceWith('');
-        });
-      }
+
       function winnerCheck() {
-        let doorCheck = document.querySelector('.door-button');
-        if (!doorCheck) {
-          alert('You found all the monsters! You avoided the sock! You win!');
+        let doors = document.querySelectorAll('[data-monster]');
+        let doorCount = doors.length;
+        let sock = document.querySelector('img[src="sock.svg"]');
+        if (sock && doorCount > 0) {
+          let p = document.querySelector('p');
+          let loserText = document.createElement('p');
+          loserText.classList.add('sock');
+          loserText.tabIndex = '-1';
+          loserText.ariaLive = 'assertive';
+          loserText.innerHTML = `Uh oh. You found the sock. You lose `;
+          p.replaceWith(loserText);
+          playAgainButton(loserText);
+          doors.forEach(function (door) {
+            door.disabled = 'true';
+            loserText.focus();
+          });
+        } else if (!sock && doorCount === 1) {
+          let p = document.querySelector('p');
+          let winnerText = document.createElement('p');
+          winnerText.tabIndex = '-1';
+          winnerText.ariaLive = 'assertive';
+          winnerText.classList.add('sock');
+          winnerText.ariaLive = 'assertive';
+          winnerText.innerHTML = `You found all the monsters! You avoided the sock! You win! `;
+          p.replaceWith(winnerText);
+          playAgainButton(winnerText);
+          doors.forEach(function (door) {
+            door.disabled = 'true';
+            winnerText.focus();
+          });
         } else {
-          alert('Uh oh. You found the sock. You lose');
+          console.log('havent lost yet');
+
+          return;
         }
       }
-
-      document.addEventListener('click', function (event) {
-        if (event.target.matches('.door-button, .door-button > *')) {
-          let findGrid = event.target.closest('.grid');
-          let sockCheck = findGrid.querySelector('.sock');
-          //   event.target.closest('.door-button').classList.add('hide-door');
-          let revMonst = findGrid.querySelector('.monster');
-          revMonst.hidden = false;
-          console.log(revMonst);
-          event.target.closest('.door-button').replaceWith('');
-          setTimeout(() => {
-            if (sockCheck) {
-              winnerCheck();
-            }
-          }, 250);
-        }
-      });
-
-      addDoors();
-
-      // startOver.addEventListener('click', function () {
-      //   removeDoors();
-      //   addDoors();
-      // });
     </script>
   </body>
 </html>
